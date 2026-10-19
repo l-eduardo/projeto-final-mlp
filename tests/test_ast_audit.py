@@ -273,6 +273,19 @@ y = obj.tanh(0.5)
         self.assertGreaterEqual(len(violations), 1)
         self.assertTrue(any("tanh" in v for v in violations))
 
+    def test_from_math_import_tanh(self) -> None:
+        source = "from math import tanh\ny = tanh(0.5)\n"
+        violations = audit_source(source)
+        self.assertGreaterEqual(len(violations), 1)
+        self.assertIn("Direct import of 'tanh' from 'math' is forbidden", violations[0])
+
+    def test_from_cmath_import_tanh(self) -> None:
+        source = "from cmath import tanh\ny = tanh(0.5)\n"
+        violations = audit_source(source)
+        self.assertGreaterEqual(len(violations), 1)
+        self.assertIn("Direct import of 'tanh' from 'cmath' is forbidden", violations[0])
+
+
 
 class TestASTAuditorDynamicExecutionBypasses(unittest.TestCase):
     """Verifies that dynamic evasion vectors are completely intercepted."""
@@ -344,6 +357,58 @@ f = getattr(np, 'exp')
         violations = audit_source(source)
         self.assertGreaterEqual(len(violations), 1)
         self.assertTrue(any("getattr on numpy is forbidden" in v for v in violations))
+
+    def test_standalone_importlib_import(self) -> None:
+        source = "import importlib\nprint(importlib)\n"
+        violations = audit_source(source)
+        self.assertGreaterEqual(len(violations), 1)
+        self.assertIn("Dynamic module loader 'importlib' is forbidden", violations[0])
+
+    def test_numpy_dict_reflection_forbidden(self) -> None:
+        source = """
+import numpy as np
+f = np.__dict__['tanh']
+"""
+        violations = audit_source(source)
+        self.assertGreaterEqual(len(violations), 1)
+        self.assertTrue(any("Dynamic reflection '__dict__' on numpy is forbidden" in v for v in violations))
+
+    def test_numpy_getattribute_reflection_forbidden(self) -> None:
+        source = """
+import numpy as np
+f = np.__getattribute__('tanh')
+"""
+        violations = audit_source(source)
+        self.assertGreaterEqual(len(violations), 1)
+        self.assertTrue(any("Dynamic reflection '__getattribute__' on numpy is forbidden" in v for v in violations))
+
+    def test_getattr_banned_builtin_eval(self) -> None:
+        source = """
+import builtins
+fn = getattr(builtins, 'eval')
+"""
+        violations = audit_source(source)
+        self.assertGreaterEqual(len(violations), 1)
+        self.assertTrue(any("Dynamic getattr for banned builtin 'eval' is forbidden" in v for v in violations))
+
+    def test_getattr_banned_builtin_exec(self) -> None:
+        source = """
+import builtins
+fn = getattr(builtins, 'exec')
+"""
+        violations = audit_source(source)
+        self.assertGreaterEqual(len(violations), 1)
+        self.assertTrue(any("Dynamic getattr for banned builtin 'exec' is forbidden" in v for v in violations))
+
+    def test_getattr_sys_modules_numpy_concat(self) -> None:
+        source = """
+import sys
+fn = getattr(sys.modules['numpy'], 'tan' + 'h')
+"""
+        violations = audit_source(source)
+        self.assertGreaterEqual(len(violations), 1)
+        self.assertTrue(any("Dynamic getattr on numpy is forbidden" in v for v in violations))
+
 
 
 class TestASTAuditorDiagnosticsAndCLI(unittest.TestCase):

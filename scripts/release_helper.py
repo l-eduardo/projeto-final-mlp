@@ -89,7 +89,12 @@ class CommitInfo:
     @property
     def category(self) -> str:
         sub = self.subject.strip().lower()
-        if sub.startswith("feat!") or "breaking change" in (sub + self.body).lower():
+        is_breaking = (
+            bool(re.match(r"^[a-zA-Z]+(\([^\)]+\))?!:", sub))
+            or "breaking change" in (sub + self.body).lower()
+            or "breaking-change" in (sub + self.body).lower()
+        )
+        if is_breaking:
             return "breaking"
         if sub.startswith("feat"):
             return "feat"
@@ -217,7 +222,10 @@ def compute_next_version(
 
     # Analyze commit types to determine SemVer increment
     has_breaking = any(
-        c.category == "breaking" or "breaking change" in (c.subject + c.body).lower()
+        c.category == "breaking"
+        or bool(re.match(r"^[a-zA-Z]+(\([^\)]+\))?!:", c.subject.strip().lower()))
+        or "breaking change" in (c.subject + c.body).lower()
+        or "breaking-change" in (c.subject + c.body).lower()
         for c in commits
     )
     has_feature = any(c.category == "feat" for c in commits)

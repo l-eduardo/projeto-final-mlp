@@ -80,6 +80,13 @@ class TestCommitInfo(unittest.TestCase):
             ("test: add smoke tests", "test"),
             ("chore: update .gitignore", "chore"),
             ("feat!: rewrite core contract", "breaking"),
+            ("feat(core)!: redesign activation layer", "breaking"),
+            ("fix!: drop deprecated parameter", "breaking"),
+            ("fix(api)!: breaking fix with scope", "breaking"),
+            ("refactor!: overhaul base class hierarchy", "breaking"),
+            ("perf!: redesign memory layout breaking ABI", "breaking"),
+            ("chore!: drop python 3.9 support", "breaking"),
+            ("docs(api)!: major documentation restructuring", "breaking"),
             ("random commit message", "other"),
         ]
         for subject, expected_cat in cases:
@@ -92,6 +99,15 @@ class TestCommitInfo(unittest.TestCase):
             author="Dev",
             subject="refactor: overhaul base class",
             body="BREAKING CHANGE: changed abstract method signature",
+        )
+        self.assertEqual(c.category, "breaking")
+
+    def test_breaking_change_hyphenated_token_in_body(self):
+        c = CommitInfo(
+            commit_hash="def5679",
+            author="Dev",
+            subject="feat: update api",
+            body="BREAKING-CHANGE: removes class X",
         )
         self.assertEqual(c.category, "breaking")
 
@@ -131,6 +147,36 @@ class TestVersionComputation(unittest.TestCase):
         ]
         next_ver, _, _ = compute_next_version(Path("."))
         self.assertEqual(next_ver.tag_name(), "v1.0.0")
+
+    @patch("release_helper.get_latest_tag")
+    @patch("release_helper.get_commits_since")
+    def test_bump_major_on_scoped_breaking(self, mock_commits, mock_tag):
+        mock_tag.return_value = "v1.0.0"
+        mock_commits.return_value = [
+            CommitInfo("111", "Dev", "feat(core)!: redesign activation layer", "")
+        ]
+        next_ver, _, _ = compute_next_version(Path("."))
+        self.assertEqual(next_ver.tag_name(), "v2.0.0")
+
+    @patch("release_helper.get_latest_tag")
+    @patch("release_helper.get_commits_since")
+    def test_bump_major_on_fix_breaking(self, mock_commits, mock_tag):
+        mock_tag.return_value = "v1.0.0"
+        mock_commits.return_value = [
+            CommitInfo("111", "Dev", "fix!: drop deprecated parameter", "")
+        ]
+        next_ver, _, _ = compute_next_version(Path("."))
+        self.assertEqual(next_ver.tag_name(), "v2.0.0")
+
+    @patch("release_helper.get_latest_tag")
+    @patch("release_helper.get_commits_since")
+    def test_bump_major_on_hyphenated_breaking_footer(self, mock_commits, mock_tag):
+        mock_tag.return_value = "v1.0.0"
+        mock_commits.return_value = [
+            CommitInfo("111", "Dev", "feat: update api", "BREAKING-CHANGE: removes class X")
+        ]
+        next_ver, _, _ = compute_next_version(Path("."))
+        self.assertEqual(next_ver.tag_name(), "v2.0.0")
 
     @patch("release_helper.get_latest_tag")
     @patch("release_helper.get_commits_since")

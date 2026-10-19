@@ -28,6 +28,7 @@ BANNED_MODULES: Set[str] = {
     "tensorflow",
     "jax",
     "keras",
+    "importlib",
 }
 
 UNAUTHORIZED_RUNTIME_MODULES: Set[str] = {
@@ -66,12 +67,27 @@ class ASTAuditor(ast.NodeVisitor):
             return node.id in self.numpy_aliases
         if isinstance(node, ast.Attribute):
             return self._is_numpy_receiver(node.value)
+        if isinstance(node, ast.Subscript):
+            if (
+                isinstance(node.value, ast.Attribute)
+                and node.value.attr == "modules"
+                and isinstance(node.value.value, ast.Name)
+                and node.value.value.id == "sys"
+            ):
+                if isinstance(node.slice, ast.Constant) and node.slice.value in self.numpy_aliases:
+                    return True
         return False
 
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             root = alias.name.split(".")[0]
-            if root in BANNED_MODULES:
+            if root == "importlib":
+                self._record_violation(
+                    node,
+                    "Security Violation",
+                    "Dynamic module loader 'importlib' is forbidden",
+                )
+            elif root in BANNED_MODULES:
                 self._record_violation(
                     node,
                     "Integrity Violation",
@@ -95,7 +111,13 @@ class ASTAuditor(ast.NodeVisitor):
 
         if node.module:
             root = node.module.split(".")[0]
-            if root in BANNED_MODULES:
+            if root == "importlib":
+                self._record_violation(
+                    node,
+                    "Security Violation",
+                    "Dynamic module loader 'importlib' is forbidden",
+                )
+            elif root in BANNED_MODULES:
                 self._record_violation(
                     node,
                     "Integrity Violation",
@@ -108,27 +130,24 @@ class ASTAuditor(ast.NodeVisitor):
                     f"Unauthorized runtime module in mlp/: '{node.module}'",
                 )
 
-            if root == "numpy":
-                for alias in node.names:
-                    if alias.name == "tanh":
-                        self._record_violation(
-                            node,
-                            "Integrity Violation",
-                            "Direct import of 'tanh' from numpy is forbidden",
-                        )
-                    elif alias.name == "*":
-                        self._record_violation(
-                            node,
-                            "Integrity Violation",
-                            "Wildcard import from numpy is forbidden (exposes np.tanh)",
-                        )
-
-            if root == "importlib":
-                self._record_violation(
-                    node,
-                    "Security Violation",
-                    "Dynamic module loader 'importlib' is forbidden",
-                )
+            # Catch direct 'tanh' import from ANY non-internal module (numpy, math, cmath, etc.)
+            for alias in node.names:
+                if alias.name == "tanh":
+                    if root == "numpy":
+                        msg = "Direct import of 'tanh' from numpy is forbidden"
+                    else:
+                        msg = f"Direct import of 'tanh' from '{node.module}' is forbidden"
+                    self._record_violation(
+                        node,
+                        "Integrity Violation",
+                        msg,
+                    )
+                elif root == "numpy" and alias.name == "*":
+                    self._record_violation(
+                        node,
+                        "Integrity Violation",
+                        "Wildcard import from numpy is forbidden (exposes np.tanh)",
+                    )
 
         self.generic_visit(node)
 
@@ -140,7 +159,44 @@ class ASTAuditor(ast.NodeVisitor):
                     self.numpy_aliases.add(target.id)
         self.generic_visit(node)
 
+    def _check_getattr_call(self, node: ast.Call) -> None:
+        if len(node.args) >= 2:
+            receiver = node.args[0]
+            attr_arg = node.args[1]
+            is_numpy = self._is_numpy_receiver(receiver)
+            if isinstance(attr_arg, ast.Constant) and isinstance(attr_arg.value, str):
+                if attr_arg.value == "tanh":
+                    self._record_violation(
+                        node,
+                        "Integrity Violation",
+                        "Dynamic getattr for 'tanh' is forbidden",
+                    )
+                elif attr_arg.value in BANNED_BUILTINS:
+                    self._record_violation(
+                        node,
+                        "Security Violation",
+                        f"Dynamic getattr for banned builtin '{attr_arg.value}' is forbidden",
+                    )
+                elif is_numpy:
+                    self._record_violation(
+                        node,
+                        "Security Violation",
+                        "Dynamic getattr on numpy is forbidden",
+                    )
+            elif is_numpy:
+                self._record_violation(
+                    node,
+                    "Security Violation",
+                    "Dynamic getattr on numpy is forbidden",
+                )
+
     def visit_Attribute(self, node: ast.Attribute) -> None:
+        if self._is_numpy_receiver(node.value) and node.attr in {"__dict__", "__getattribute__"}:
+            self._record_violation(
+                node,
+                "Security Violation",
+                f"Dynamic reflection '{node.attr}' on numpy is forbidden",
+            )
         if node.attr == "tanh":
             if self._is_numpy_receiver(node.value):
                 self._record_violation(
@@ -185,26 +241,7 @@ class ASTAuditor(ast.NodeVisitor):
                     "Dynamic module loading via 'import_module()' is forbidden",
                 )
             elif func_name == "getattr":
-                if len(node.args) >= 2:
-                    receiver = node.args[0]
-                    attr_arg = node.args[1]
-                    is_numpy = self._is_numpy_receiver(receiver)
-                    is_tanh = (
-                        isinstance(attr_arg, ast.Constant)
-                        and attr_arg.value == "tanh"
-                    )
-                    if is_tanh:
-                        self._record_violation(
-                            node,
-                            "Integrity Violation",
-                            "Dynamic getattr for 'tanh' is forbidden",
-                        )
-                    elif is_numpy:
-                        self._record_violation(
-                            node,
-                            "Security Violation",
-                            "Dynamic getattr on numpy is forbidden",
-                        )
+                self._check_getattr_call(node)
         elif isinstance(node.func, ast.Attribute):
             attr_name = node.func.attr
             if attr_name in BANNED_BUILTINS:
@@ -219,6 +256,8 @@ class ASTAuditor(ast.NodeVisitor):
                     "Security Violation",
                     "Dynamic module loading via 'import_module()' is forbidden",
                 )
+            elif attr_name == "getattr":
+                self._check_getattr_call(node)
         self.generic_visit(node)
 
 
