@@ -1,0 +1,84 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline - MLP Project (INE5664 - UFSC)
+# Academic Multi-Layer Perceptron Implementation
+# ==============================================================================
+
+default:
+  image: python:3.10-slim
+
+stages:
+  - lint
+  - audit
+  - test
+  - release
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+# Global pip cache keyed by pyproject.toml specification
+cache:
+  key:
+    files:
+      - pyproject.toml
+  paths:
+    - .cache/pip
+
+# ------------------------------------------------------------------------------
+# 1. Lint Stage: Static Analysis & Code Formatting Verification
+# ------------------------------------------------------------------------------
+lint:
+  stage: lint
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install ruff
+  script:
+    - ruff check mlp/ tests/ scripts/
+    - ruff format --check mlp/ tests/ scripts/
+
+# ------------------------------------------------------------------------------
+# 2. Audit Stage: Strict AST Academic Integrity Verification
+# Ensures pure NumPy implementation and prohibits banned ML/autograd libraries
+# Operates with zero pip dependencies using standard library AST parser
+# ------------------------------------------------------------------------------
+audit:
+  stage: audit
+  before_script: []
+  script:
+    - python3 scripts/audit_ast.py mlp/
+
+# ------------------------------------------------------------------------------
+# 3. Test Stage: Unit, Smoke & Coverage Test Suite
+# Generates Cobertura XML and JUnit XML reports for GitLab MR integration
+# ------------------------------------------------------------------------------
+test:
+  stage: test
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install .[dev]
+  script:
+    - pytest --cov=mlp --cov-report=term --cov-report=xml:coverage.xml --junitxml=report.xml tests/
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+# ------------------------------------------------------------------------------
+# 4. Release Stage: Continuous Delivery & Automated SemVer Tagging
+# Triggers exclusively upon merge into the protected 'main' branch
+# Generates release notes, creates Git tag, and publishes GitLab release
+# ------------------------------------------------------------------------------
+release:
+  stage: release
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script: []
+  script:
+    - python3 scripts/release_helper.py --gitlab-release --notes-file release_notes.md
+  artifacts:
+    when: always
+    paths:
+      - release_notes.md
