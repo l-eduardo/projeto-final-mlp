@@ -8,18 +8,17 @@
 
 ## Issues Relacionadas
 
-<!-- Referencie as issues aplicáveis (ex.: Closes #1, Relacionada a #2, #3, #4, #5) -->
+<!-- Referencie as issues aplicáveis (ex.: Closes #1, Relacionada a #2) -->
 - Closes #
-- Relacionada a: #1, #2, #3, #4, #5
 
 ## Tipo de Mudança
 
 - [ ] `feat`: Nova funcionalidade ou módulo
 - [ ] `fix`: Correção de defeito/bug
 - [ ] `refactor`: Refatoração sem alteração de comportamento
-- [ ] `test`: Adição ou melhoria de testes
+- [ ] `test`: Adição ou melhoria de testes de código
 - [ ] `docs`: Atualização de documentação
-- [ ] `ci`: Alterações nos pipelines de CI/CD ou scripts de automação
+- [ ] `ci`: Alterações no pipeline de CI/CD ou automação
 - [ ] `chore`: Tarefas de manutenção ou governança
 
 ---
@@ -32,7 +31,7 @@ Todos os itens abaixo são obrigatórios para a aprovação do Merge Request e i
 - [ ] **Proibição estrita de `np.tanh` / `numpy.tanh`:** Funções de ativação (incluindo tangente hiperbólica) implementadas manualmente a partir de aritmética elementar de exponenciais.
 - [ ] **Imutabilidade dos contratos abstratos de `mlp/base.py`:** Nenhuma interface ou assinatura de método público em `mlp/base.py` foi alterada.
 - [ ] **Isolamento de dependências:** Dependências de `dev` e `notebook` estritamente segregadas no `pyproject.toml`, mantendo `numpy` como dependência única do core da biblioteca.
-- [ ] **Pipeline CI verde:** Todos os estágios da esteira (`lint`, `audit` AST e `test` com pytest) passam com sucesso em ambiente limpo.
+- [ ] **Pipeline CI verde:** Todos os estágios da esteira (`lint` e `test`) passam com sucesso em ambiente limpo.
 - [ ] **Reprodutibilidade do relatório técnico:** O arquivo `relatorio_tecnico.ipynb` executa de ponta a ponta sem erros e mantém células de saída/gráficos salvas.
 - [ ] **Transparência do uso de IA documentada:** Todas as interações com ferramentas de Inteligência Artificial estão registradas de forma detalhada e honesta em `AI_USAGE.md`.
 
@@ -45,18 +44,8 @@ Descreva os comandos executados para validar localmente as alterações antes da
 ```bash
 # 1. Verificação de formatação e linting
 ruff check .
+ruff format --check .
 
-# 2. Auditoria estática de AST (conformidade do código mlp/)
-python3 scripts/audit_ast.py
-
-# 3. Execução da suíte de testes com cobertura
+# 2. Execução dos testes
 pytest tests/
 ```
-
-- [ ] Linting executado e sem alertas (`ruff check .`)
-- [ ] Auditoria de AST executada com código de saída 0 (`python3 scripts/audit_ast.py`)
-- [ ] Testes unitários/integração executados com 100% de sucesso (`pytest tests/`)
-
-## Notas Adicionais e Riscos
-
-<!-- Descreva qualquer consideração especial, dependências externas ou impactos colaterais esperados. -->

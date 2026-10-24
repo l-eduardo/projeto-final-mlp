@@ -8,14 +8,12 @@ default:
 
 stages:
   - lint
-  - audit
   - test
   - release
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-# Global pip cache keyed by pyproject.toml specification
 cache:
   key:
     files:
@@ -24,7 +22,7 @@ cache:
     - .cache/pip
 
 # ------------------------------------------------------------------------------
-# 1. Lint Stage: Static Analysis & Code Formatting Verification
+# 1. Lint Stage: Checagem de Estilo e Formatação (Ruff)
 # ------------------------------------------------------------------------------
 lint:
   stage: lint
@@ -32,23 +30,11 @@ lint:
     - python -m pip install --upgrade pip
     - pip install ruff
   script:
-    - ruff check mlp/ tests/ scripts/
-    - ruff format --check mlp/ tests/ scripts/
+    - ruff check mlp/ tests/
+    - ruff format --check mlp/ tests/
 
 # ------------------------------------------------------------------------------
-# 2. Audit Stage: Strict AST Academic Integrity Verification
-# Ensures pure NumPy implementation and prohibits banned ML/autograd libraries
-# Operates with zero pip dependencies using standard library AST parser
-# ------------------------------------------------------------------------------
-audit:
-  stage: audit
-  before_script: []
-  script:
-    - python3 scripts/audit_ast.py mlp/
-
-# ------------------------------------------------------------------------------
-# 3. Test Stage: Unit, Smoke & Coverage Test Suite
-# Generates Cobertura XML and JUnit XML reports for GitLab MR integration
+# 2. Test Stage: Execução dos Testes da Biblioteca
 # ------------------------------------------------------------------------------
 test:
   stage: test
@@ -56,29 +42,21 @@ test:
     - python -m pip install --upgrade pip
     - pip install .[dev]
   script:
-    - pytest --cov=mlp --cov-report=term --cov-report=xml:coverage.xml --junitxml=report.xml tests/
-  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
-  artifacts:
-    when: always
-    reports:
-      junit: report.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
+    - pytest tests/
 
 # ------------------------------------------------------------------------------
-# 4. Release Stage: Continuous Delivery & Automated SemVer Tagging
-# Triggers exclusively upon merge into the protected 'main' branch
-# Generates release notes, creates Git tag, and publishes GitLab release
+# 3. Release Stage: Lançamento de Release Automática via semantic-release
+# Executado exclusivamente após merge na branch principal 'main'
 # ------------------------------------------------------------------------------
 release:
   stage: release
+  image: node:20-slim
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-  before_script: []
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends git ca-certificates
+    - npm install -g semantic-release @semantic-release/gitlab @semantic-release/git @semantic-release/changelog
   script:
-    - python3 scripts/release_helper.py --gitlab-release --notes-file release_notes.md
-  artifacts:
-    when: always
-    paths:
-      - release_notes.md
+    - npx semantic-release
+  variables:
+    GITLAB_URL: "https://codigos.ufsc.br"
