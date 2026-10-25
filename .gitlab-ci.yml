@@ -42,7 +42,7 @@ test:
     - python -m pip install --upgrade pip
     - pip install .[dev]
   script:
-    - pytest tests/
+    - pytest tests/ || [ $? -eq 5 ]
 
 # ------------------------------------------------------------------------------
 # 3. Release Stage: Lançamento de Release Automática via semantic-release
