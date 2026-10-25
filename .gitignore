@@ -59,3 +59,6 @@ htmlcov/
 .claude/
 prompt_draft.md
 plano_projeto_mlp.md
+
+# Lint
+.ruff_cache

@@ -1,51 +1,50 @@
 ## Descrição das Alterações
 
-<!-- Forneça um resumo claro e conciso das alterações implementadas neste Merge Request. -->
+<!-- Resumo claro do que foi implementado ou alterado. -->
 
 ## Motivação e Contexto
 
-<!-- Explique por que esta mudança é necessária. Qual problema ela resolve ou qual funcionalidade adiciona? -->
+<!-- Qual problema esta mudança resolve ou qual funcionalidade adiciona? -->
 
 ## Issues Relacionadas
 
-<!-- Referencie as issues aplicáveis (ex.: Closes #1, Relacionada a #2) -->
+<!-- Exemplo: Closes #6, Relacionada a #7 -->
 - Closes #
+
+## Referências para Estudo e Revisão (Opcional)
+
+<!-- Links para artigos, documentação ou notas de aula que auxiliem os revisores na compreensão da técnica implementada. -->
+- 
 
 ## Tipo de Mudança
 
 - [ ] `feat`: Nova funcionalidade ou módulo
-- [ ] `fix`: Correção de defeito/bug
+- [ ] `fix`: Correção de bug
 - [ ] `refactor`: Refatoração sem alteração de comportamento
-- [ ] `test`: Adição ou melhoria de testes de código
-- [ ] `docs`: Atualização de documentação
-- [ ] `ci`: Alterações no pipeline de CI/CD ou automação
-- [ ] `chore`: Tarefas de manutenção ou governança
+- [ ] `test`: Adição ou melhoria de testes
+- [ ] `docs`: Documentação
+- [ ] `ci`: Pipeline de CI/CD ou automação
+- [ ] `chore`: Manutenção ou governança
 
 ---
 
-## Checklist de Conformidade Acadêmica (MANDATÓRIO)
+## Checklist de Conformidade Acadêmica
 
-Todos os itens abaixo são obrigatórios para a aprovação do Merge Request e integração na branch `main`:
-
-- [ ] **Exclusividade NumPy no core `mlp/`:** Zero imports de bibliotecas de ML ou diferenciação automática (`torch`, `sklearn`, `scipy`, `autograd`, `tensorflow`, `jax`, `keras`).
-- [ ] **Proibição estrita de `np.tanh` / `numpy.tanh`:** Funções de ativação (incluindo tangente hiperbólica) implementadas manualmente a partir de aritmética elementar de exponenciais.
-- [ ] **Imutabilidade dos contratos abstratos de `mlp/base.py`:** Nenhuma interface ou assinatura de método público em `mlp/base.py` foi alterada.
-- [ ] **Isolamento de dependências:** Dependências de `dev` e `notebook` estritamente segregadas no `pyproject.toml`, mantendo `numpy` como dependência única do core da biblioteca.
-- [ ] **Pipeline CI verde:** Todos os estágios da esteira (`lint` e `test`) passam com sucesso em ambiente limpo.
-- [ ] **Reprodutibilidade do relatório técnico:** O arquivo `relatorio_tecnico.ipynb` executa de ponta a ponta sem erros e mantém células de saída/gráficos salvas.
-- [ ] **Transparência do uso de IA documentada:** Todas as interações com ferramentas de Inteligência Artificial estão registradas de forma detalhada e honesta em `AI_USAGE.md`.
+- [ ] **Exclusividade NumPy no core `mlp/`:** Zero imports de bibliotecas de ML ou autograd (`torch`, `sklearn`, `scipy`, `autograd`, `tensorflow`, `jax`, etc.).
+- [ ] **Proibição de `np.tanh`:** Funções de ativação calculadas a partir de operações aritméticas elementares.
+- [ ] **Contratos de `mlp/base.py` preservados:** Nenhuma interface abstrata foi alterada.
+- [ ] **Isolamento de dependências:** Dependências auxiliares mantidas exclusivamente nos grupos opcionais do `pyproject.toml`.
+- [ ] **Pipeline de CI aprovada:** Testes e linters passam sem erros.
+- [ ] **Compreensão integral do código:** Todo o código submetido foi revisado e é compreendido pelos integrantes do grupo.
 
 ---
 
-## Verificação e Testes Locais
+## Verificação Local
 
-Descreva os comandos executados para validar localmente as alterações antes da abertura do MR:
+Comandos executados para validar as alterações antes de abrir o MR:
 
 ```bash
-# 1. Verificação de formatação e linting
 ruff check .
 ruff format --check .
-
-# 2. Execução dos testes
 pytest tests/
 ```

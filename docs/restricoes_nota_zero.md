@@ -4,7 +4,7 @@ Este documento estabelece as diretrizes e regras inegociáveis do Projeto Final 
 
 > [!CAUTION]
 > **ATENÇÃO CRÍTICA — RISCO DE NOTA 0,0 (ZERO)**  
-> A violação de qualquer uma das restrições descritas neste documento resulta em nota final **0,0 (zero)** para o componente de nota do grupo ($N_g$) ou para o integrante individualmente.
+> A violação de qualquer uma das restrições descritas neste documento resulta em nota final **0,0 (zero)** para o componente de nota do grupo ou para o integrante individualmente.
 
 ---
 
