@@ -36,9 +36,3 @@ Na etapa de **Configuração, Governança e CI/CD**, a Inteligência Artificial 
 
 ### 2.3. Empacotamento
 - Configuração do `pyproject.toml` (PEP 621), estabelecendo `numpy` como dependência principal e isolando pacotes auxiliares nos grupos opcionais `dev` e `notebook`.
-
----
-
-## 3. Revisão e Validação Humana
-
-Todas as configurações e arquivos propostos pela IA foram revisados pelos autores, testados no ambiente local e verificados contra os critérios do enunciado da disciplina antes da submissão do Merge Request.
