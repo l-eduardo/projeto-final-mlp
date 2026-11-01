@@ -1,0 +1,63 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline - MLP Project (INE5664 - UFSC)
+# Academic Multi-Layer Perceptron Implementation
+# ==============================================================================
+
+default:
+  image: python:3.10-slim
+
+stages:
+  - lint
+  - test
+  - release
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  key:
+    files:
+      - requirements.txt
+      - requirements-dev.txt
+  paths:
+    - .cache/pip
+
+# ------------------------------------------------------------------------------
+# 1. Lint Stage: Checagem de Estilo e Formatação (Ruff)
+# ------------------------------------------------------------------------------
+lint:
+  stage: lint
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install -r requirements-dev.txt
+  script:
+    - ruff check mlp/ tests/
+    - ruff format --check mlp/ tests/
+
+# ------------------------------------------------------------------------------
+# 2. Test Stage: Execução dos Testes da Biblioteca
+# ------------------------------------------------------------------------------
+test:
+  stage: test
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install -r requirements-dev.txt
+  script:
+    - pytest tests/ || [ $? -eq 5 ]
+
+# ------------------------------------------------------------------------------
+# 3. Release Stage: Lançamento de Release Automática via semantic-release
+# Executado exclusivamente após merge na branch principal 'main'
+# ------------------------------------------------------------------------------
+release:
+  stage: release
+  image: node:20-slim
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends git ca-certificates
+    - npm install -g semantic-release @semantic-release/gitlab @semantic-release/git @semantic-release/changelog
+  script:
+    - npx semantic-release
+  variables:
+    GITLAB_URL: "https://codigos.ufsc.br"

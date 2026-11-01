@@ -43,7 +43,22 @@ ENV/
 # MacOS
 .DS_Store
 
-# Pytest / Testes locais
+# Pytest / Testes locais e relatórios de cobertura
 .pytest_cache/
 .coverage
+coverage.xml
+report.xml
 htmlcov/
+
+# Isolamento de Worktrees Git
+.worktrees/
+
+# Arquivos e metadados de Agentes / IA
+.agents/
+.gemini/
+.claude/
+prompt_draft.md
+plano_projeto_mlp.md
+
+# Lint
+.ruff_cache
