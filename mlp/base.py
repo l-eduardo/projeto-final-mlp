@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 import numpy as np
 
 
@@ -34,16 +35,12 @@ class FuncaoCusto(ABC):
     """Interface abstrata base para funções de custo/perda."""
 
     @abstractmethod
-    def calcular_custo(
-        self, y_verdadeiro: np.ndarray, y_predito: np.ndarray
-    ) -> float:
+    def calcular_custo(self, y_verdadeiro: np.ndarray, y_predito: np.ndarray) -> float:
         """Calcula o valor escalar do custo (loss)."""
         pass
 
     @abstractmethod
-    def gradiente(
-        self, y_verdadeiro: np.ndarray, y_predito: np.ndarray
-    ) -> np.ndarray:
+    def gradiente(self, y_verdadeiro: np.ndarray, y_predito: np.ndarray) -> np.ndarray:
         """Calcula a derivada da função de custo em relação a y_predito (dE/dy_predito)."""
         pass
 
