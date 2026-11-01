@@ -34,5 +34,5 @@ Na etapa de **Configuração, Governança e CI/CD**, a Inteligência Artificial 
 - Elaboração do template padrão de Merge Request (`.gitlab/merge_request_templates/Default.md`) com checklist de conformidade acadêmica e seção para referências de estudo.
 - Criação dos arquivos de diretrizes de IA (`CLAUDE.md`, `.gemini/rules.md` e `docs/restricoes_nota_zero.md`) para orientar assistentes a nunca violarem as regras do trabalho.
 
-### 2.3. Empacotamento
-- Configuração do `pyproject.toml` (PEP 621), estabelecendo `numpy` como dependência principal e isolando pacotes auxiliares nos grupos opcionais `dev` e `notebook`.
+### 2.3. Gestão de Dependências e Ambiente
+- Isolamento das dependências através de arquivos de requisitos (`requirements.txt`, `requirements-dev.txt`), mantendo `numpy` como dependência exclusiva para a biblioteca `mlp` e separando ferramentas de desenvolvimento (`pytest`, `ruff`) e pacotes para análise no relatório técnico.

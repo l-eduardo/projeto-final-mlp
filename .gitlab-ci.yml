@@ -17,7 +17,8 @@ variables:
 cache:
   key:
     files:
-      - pyproject.toml
+      - requirements.txt
+      - requirements-dev.txt
   paths:
     - .cache/pip
 
@@ -28,7 +29,7 @@ lint:
   stage: lint
   before_script:
     - python -m pip install --upgrade pip
-    - pip install ruff
+    - pip install -r requirements-dev.txt
   script:
     - ruff check mlp/ tests/
     - ruff format --check mlp/ tests/
@@ -40,7 +41,7 @@ test:
   stage: test
   before_script:
     - python -m pip install --upgrade pip
-    - pip install .[dev]
+    - pip install -r requirements-dev.txt
   script:
     - pytest tests/ || [ $? -eq 5 ]
 

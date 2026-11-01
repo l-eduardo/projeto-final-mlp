@@ -14,7 +14,7 @@
    - Dentro de `mlp/`: **apenas NumPy** é permitido. Nunca sugira, adicione imports ou utilize `sklearn`, `torch`, `scipy`, `tensorflow`, `jax`, `autograd` ou similares.
    - Todo forward e backward deve ser analítico e manual.
    - NUNCA use `np.tanh` nas ativações da biblioteca (vedado pelo enunciado).
-   - Não adicione bibliotecas externas além de `numpy` em `dependencies` do `pyproject.toml`.
+   - Não adicione bibliotecas externas além de `numpy` nas dependências da biblioteca `mlp` (em `requirements.txt`).
 
 2. **Protocolo em caso de risco ou esbarrar em violação**:
    - **PARE IMEDIATAMENTE**.
