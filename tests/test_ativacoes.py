@@ -1,7 +1,16 @@
 import numpy as np
 import pytest
 
-from mlp.ativacoes import LeakyReLU, Sigmoide, Softmax, Swish
+from mlp.ativacoes import (
+    ELU,
+    LeakyReLU,
+    Sigmoide,
+    Softmax,
+    Softplus,
+    Softsign,
+    Swish,
+    Tanh,
+)
 
 FORMATOS_TESTE = [
     (1, 1),
@@ -255,3 +264,215 @@ def test_swish_estabilidade_sem_overflow():
     assert not np.any(np.isinf(a))
     assert np.isclose(a[0], 0.0)
     assert np.isclose(a[-1], 1000.0)
+
+
+# =============================================================================
+# 6. Tanh Analítica
+# =============================================================================
+
+
+def test_tanh_valores_conhecidos():
+    """Valida valores de Tanh(0) = 0 e comportamento anti-simétrico Tanh(-z) = -Tanh(z)."""
+    ativacao = Tanh()
+    z = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert np.isclose(a[2], 0.0)
+    np.testing.assert_allclose(a[:2], -a[4:2:-1], rtol=1e-5)
+
+
+@pytest.mark.parametrize("formato", FORMATOS_TESTE)
+def test_tanh_formato_preservado(formato):
+    """Valida dimensões de entrada e saída na Tanh analítica."""
+    ativacao = Tanh()
+    z = np.random.randn(*formato)
+    a = ativacao.passo_a_frente(z)
+    assert a.shape == formato
+
+    grad_entrada = ativacao.passo_atras(np.ones_like(a))
+    assert grad_entrada.shape == formato
+
+
+def test_tanh_derivada_analitica():
+    """Valida se dL/dZ = dL/dA * (1 - tanh^2(Z))."""
+    ativacao = Tanh()
+    z = np.array([-1.5, 0.0, 1.5])
+    a = ativacao.passo_a_frente(z)
+
+    grad_saida = np.array([1.0, 2.0, 0.5])
+    grad_entrada = ativacao.passo_atras(grad_saida)
+
+    esperado = grad_saida * (1.0 - a**2)
+    np.testing.assert_allclose(grad_entrada, esperado, rtol=1e-6)
+
+
+def test_tanh_estabilidade_sem_overflow():
+    """Valida se a Tanh analítica satura em -1 e 1 sem gerar NaN/inf para entradas extremas."""
+    ativacao = Tanh()
+    z = np.array([-1000.0, -500.0, 500.0, 1000.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert not np.any(np.isnan(a))
+    assert not np.any(np.isinf(a))
+    assert np.all(a >= -1.0) and np.all(a <= 1.0)
+    assert np.isclose(a[0], -1.0)
+    assert np.isclose(a[-1], 1.0)
+
+
+# =============================================================================
+# 7. ELU
+# =============================================================================
+
+
+def test_elu_valores_conhecidos():
+    """Valida ELU(0) = 0, identidade para z > 0 e alpha*(exp(z) - 1) para z <= 0."""
+    ativacao = ELU(alpha=1.0)
+    z = np.array([-1.0, 0.0, 2.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert np.isclose(a[1], 0.0)
+    assert np.isclose(a[2], 2.0)
+    assert np.isclose(a[0], np.exp(-1.0) - 1.0)
+
+
+@pytest.mark.parametrize("formato", FORMATOS_TESTE)
+def test_elu_formato_preservado(formato):
+    """Valida dimensões de entrada e saída na ELU."""
+    ativacao = ELU(alpha=1.5)
+    z = np.random.randn(*formato)
+    a = ativacao.passo_a_frente(z)
+    assert a.shape == formato
+
+    grad_entrada = ativacao.passo_atras(np.ones_like(a))
+    assert grad_entrada.shape == formato
+
+
+def test_elu_derivada_analitica():
+    """Valida se dL/dZ = dL/dA * (1 se z > 0 senão alpha * exp(z))."""
+    alpha = 1.2
+    ativacao = ELU(alpha=alpha)
+    z = np.array([-2.0, 0.0, 3.0])
+    ativacao.passo_a_frente(z)
+
+    grad_saida = np.array([2.0, 1.0, 0.5])
+    grad_entrada = ativacao.passo_atras(grad_saida)
+
+    derivada_esperada = np.array([alpha * np.exp(-2.0), alpha, 1.0])
+    np.testing.assert_allclose(grad_entrada, grad_saida * derivada_esperada, rtol=1e-6)
+
+
+def test_elu_estabilidade_sem_overflow():
+    """Valida se a ELU não gera NaN/inf com entradas extremas negativas."""
+    alpha = 1.0
+    ativacao = ELU(alpha=alpha)
+    z = np.array([-1000.0, -500.0, 500.0, 1000.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert not np.any(np.isnan(a))
+    assert not np.any(np.isinf(a))
+    assert np.isclose(a[0], -alpha)
+    assert np.isclose(a[-1], 1000.0)
+
+
+# =============================================================================
+# 8. Softplus
+# =============================================================================
+
+
+def test_softplus_valores_conhecidos():
+    """Valida Softplus(0) = ln(2) e aproximações assintóticas."""
+    ativacao = Softplus()
+    z = np.array([0.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert np.isclose(a[0], np.log(2.0), rtol=1e-6)
+
+
+@pytest.mark.parametrize("formato", FORMATOS_TESTE)
+def test_softplus_formato_preservado(formato):
+    """Valida dimensões de entrada e saída na Softplus."""
+    ativacao = Softplus()
+    z = np.random.randn(*formato)
+    a = ativacao.passo_a_frente(z)
+    assert a.shape == formato
+
+    grad_entrada = ativacao.passo_atras(np.ones_like(a))
+    assert grad_entrada.shape == formato
+
+
+def test_softplus_derivada_analitica():
+    """Valida se dL/dZ = dL/dA * sigmoide(Z)."""
+    ativacao = Softplus()
+    z = np.array([-1.5, 0.0, 2.0])
+    ativacao.passo_a_frente(z)
+
+    grad_saida = np.array([1.0, 2.0, 0.5])
+    grad_entrada = ativacao.passo_atras(grad_saida)
+
+    sig = 1.0 / (1.0 + np.exp(-z))
+    np.testing.assert_allclose(grad_entrada, grad_saida * sig, rtol=1e-6)
+
+
+def test_softplus_estabilidade_sem_overflow():
+    """Valida se a Softplus não gera NaN/inf para entradas extremas positivas ou negativas."""
+    ativacao = Softplus()
+    z = np.array([-1000.0, -500.0, 500.0, 1000.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert not np.any(np.isnan(a))
+    assert not np.any(np.isinf(a))
+    assert np.isclose(a[0], 0.0)
+    assert np.isclose(a[-1], 1000.0)
+
+
+# =============================================================================
+# 9. Softsign
+# =============================================================================
+
+
+def test_softsign_valores_conhecidos():
+    """Valida Softsign(0) = 0 e simetria ímpar Softsign(-z) = -Softsign(z)."""
+    ativacao = Softsign()
+    z = np.array([-3.0, -1.0, 0.0, 1.0, 3.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert np.isclose(a[2], 0.0)
+    assert np.isclose(a[3], 0.5)
+    np.testing.assert_allclose(a[:2], -a[4:2:-1], rtol=1e-6)
+
+
+@pytest.mark.parametrize("formato", FORMATOS_TESTE)
+def test_softsign_formato_preservado(formato):
+    """Valida dimensões de entrada e saída na Softsign."""
+    ativacao = Softsign()
+    z = np.random.randn(*formato)
+    a = ativacao.passo_a_frente(z)
+    assert a.shape == formato
+
+    grad_entrada = ativacao.passo_atras(np.ones_like(a))
+    assert grad_entrada.shape == formato
+
+
+def test_softsign_derivada_analitica():
+    """Valida se dL/dZ = dL/dA * (1 / (1 + |z|)^2)."""
+    ativacao = Softsign()
+    z = np.array([-2.0, 0.0, 2.0])
+    ativacao.passo_a_frente(z)
+
+    grad_saida = np.array([1.0, 2.0, 0.5])
+    grad_entrada = ativacao.passo_atras(grad_saida)
+
+    derivada_esperada = 1.0 / ((1.0 + np.abs(z)) ** 2)
+    np.testing.assert_allclose(grad_entrada, grad_saida * derivada_esperada, rtol=1e-6)
+
+
+def test_softsign_estabilidade_sem_overflow():
+    """Valida se Softsign não gera NaN/inf para entradas extremas."""
+    ativacao = Softsign()
+    z = np.array([-1000.0, -500.0, 500.0, 1000.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert not np.any(np.isnan(a))
+    assert not np.any(np.isinf(a))
+    assert np.isclose(a[0], -1.0, atol=1e-3)
+    assert np.isclose(a[-1], 1.0, atol=1e-3)
