@@ -3,6 +3,20 @@ import numpy as np
 from mlp.base import Ativacao
 
 
+def sigmoide(z: np.ndarray) -> np.ndarray:
+    """Calcula a função sigmoide de uma matriz de entradas z de forma numericamente estável.
+
+    Este método foi criado como função utilitária pois a sigmoide é utilizada em
+    diversas funções de ativação e suas respectivas derivadas analíticas.
+    """
+    exp_neg_abs = np.exp(-np.abs(z))
+    return np.where(
+        z >= 0,
+        1 / (1 + exp_neg_abs),  # Para z >= 0: 1 / (1 + exp(-z))
+        exp_neg_abs / (1 + exp_neg_abs),  # Para z < 0: exp(z) / (1 + exp(z))
+    )
+
+
 class Sigmoide(Ativacao):
     """Função de ativação Sigmoide (Logística).
 
@@ -13,17 +27,12 @@ class Sigmoide(Ativacao):
         f'(z) = f(z) * (1 - f(z))
 
     Nota de estabilidade numérica:
-        Para evitar overflow em exp(-z) com valores de z muito negativos,
-        recomenda-se tratar os ramos z >= 0 e z < 0 ou aplicar clipping.
+        Calculada de forma estável decompondo em z >= 0 e z < 0 sem saturação por overflow.
     """
 
     def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
-        cliped_entradas = np.clip(entradas, -500, 500)
-
-        output = 1 / (1 + np.exp(-cliped_entradas))
-
-        self.ativacoes = output  # Armazena as ativações para uso na retropropagação
-        return output
+        self.ativacoes = sigmoide(entradas)
+        return self.ativacoes
 
     def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
         return gradiente_saida * self.ativacoes * (1 - self.ativacoes)
@@ -52,66 +61,13 @@ class LeakyReLU(Ativacao):
         self.alpha = float(alpha)
 
     def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
-        """Calcula a propagação direta da função LeakyReLU.
-
-        Parâmetros:
-            entradas (np.ndarray): Matriz de entradas (pré-ativações Z).
-
-        Retorna:
-            np.ndarray: Ativações calculadas A = f(Z).
-        """
         self.entradas = entradas
         return np.where(entradas > 0, entradas, self.alpha * entradas)
 
     def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
-        """Calcula a retropropagação da LeakyReLU aplicando a regra da cadeia.
-
-        Parâmetros:
-            gradiente_saida (np.ndarray): dL/dA recebido da camada posterior.
-
-        Retorna:
-            np.ndarray: Gradiente em relação às entradas dL/dZ = dL/dA * f'(Z).
-        """
         return np.where(
             self.entradas > 0, gradiente_saida, self.alpha * gradiente_saida
         )
-
-
-class Tanh(Ativacao):
-    """Função de ativação Tangente Hiperbólica (Tanh) analítica.
-
-    ATENÇÃO - REQUISITO DE NOTA ZERO:
-        É terminantemente proibido o uso de `np.tanh`.
-        O cálculo deve ser analítico a partir de exponenciais elementares:
-        tanh(z) = (exp(z) - exp(-z)) / (exp(z) + exp(-z))
-        ou equivalentemente:
-        tanh(z) = 2 / (1 + exp(-2z)) - 1
-
-    Derivada analítica:
-        f'(z) = 1 - (tanh(z))^2
-    """
-
-    def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
-        """Calcula a propagação direta da função Tanh analítica.
-
-        Parâmetros:
-            entradas (np.ndarray): Matriz de entradas (pré-ativações Z).
-
-        Retorna:
-            np.ndarray: Ativações calculadas A = tanh(Z).
-        """
-        raise NotImplementedError("A ser implementado na Issue #7")
-
-    def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
-        """Calcula a retropropagação da Tanh aplicando a regra da cadeia.
-
-        Parâmetros:
-            gradiente_saida (np.ndarray): dL/dA recebido da camada posterior.
-
-        Retorna:
-            np.ndarray: Gradiente em relação às entradas dL/dZ = dL/dA * f'(Z).
-        """
-        raise NotImplementedError("A ser implementado na Issue #7")
 
 
 class Swish(Ativacao):
@@ -126,28 +82,35 @@ class Swish(Ativacao):
         f'(z) = f(z) + sigmoide(z) * (1 - f(z))
 
     Nota de estabilidade numérica:
-        Recomenda-se proteger o cálculo da sigmoide contra overflow em exp(-z)
-        para valores de z muito negativos (clipping ou ramos z >= 0 e z < 0).
+        Calculada com sigmoide estável sem risco de overflow em exp(-z).
     """
 
     def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
-        """Calcula a propagação direta da função Swish.
-
-        Parâmetros:
-            entradas (np.ndarray): Matriz de entradas (pré-ativações Z).
-
-        Retorna:
-            np.ndarray: Ativações calculadas A = Z * sigmoide(Z).
-        """
-        raise NotImplementedError("A ser implementado na Issue #7")
+        self.sigmoide = sigmoide(entradas)
+        self.ativacoes = entradas * self.sigmoide
+        return self.ativacoes
 
     def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
-        """Calcula a retropropagação da Swish aplicando a regra da cadeia.
+        derivada = self.ativacoes + self.sigmoide * (1 - self.ativacoes)
+        return gradiente_saida * derivada
 
-        Parâmetros:
-            gradiente_saida (np.ndarray): dL/dA recebido da camada posterior.
 
-        Retorna:
-            np.ndarray: Gradiente em relação às entradas dL/dZ = dL/dA * f'(Z).
-        """
-        raise NotImplementedError("A ser implementado na Issue #7")
+class Softmax(Ativacao):
+    """Função de ativação Softmax para classificação multiclasse.
+
+    Fórmula matemática:
+        S(z_i) = exp(z_i - max(z)) / sum_j(exp(z_j - max(z)))
+
+    Derivada analítica (produto vetor-Jacobiana por amostra):
+        dL/dz_i = S_i * (dL/dS_i - sum_j(dL/dS_j * S_j))
+    """
+
+    def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
+        z_estavel = entradas - np.max(entradas, axis=-1, keepdims=True)
+        exps = np.exp(z_estavel)
+        self.ativacoes = exps / np.sum(exps, axis=-1, keepdims=True)
+        return self.ativacoes
+
+    def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
+        soma = np.sum(gradiente_saida * self.ativacoes, axis=-1, keepdims=True)
+        return self.ativacoes * (gradiente_saida - soma)

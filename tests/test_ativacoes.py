@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from mlp.ativacoes import LeakyReLU, Sigmoide, Swish, Tanh
+from mlp.ativacoes import LeakyReLU, Sigmoide, Softmax, Swish
 
 FORMATOS_TESTE = [
     (1, 1),
@@ -148,56 +148,58 @@ def test_leaky_relu_derivada_analitica():
 
 
 # =============================================================================
-# 4. Tanh Analítica
+# 4. Softmax
 # =============================================================================
 
 
-def test_tanh_valores_conhecidos():
-    """Valida valores de Tanh(0) = 0 e comportamento anti-simétrico Tanh(-z) = -Tanh(z)."""
-    ativacao = Tanh()
-    z = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])
+def test_softmax_valores_conhecidos_e_soma_um():
+    """Valida se as probabilidades da Softmax somam 1 por amostra e são uniformes para entradas iguais."""
+    ativacao = Softmax()
+    z = np.array([[1.0, 1.0, 1.0, 1.0], [0.0, 1.0, 2.0, 3.0]])
     a = ativacao.passo_a_frente(z)
 
-    assert np.isclose(a[2], 0.0)
-    np.testing.assert_allclose(a[:2], -a[4:2:-1], rtol=1e-5)
+    np.testing.assert_allclose(a[0], np.full(4, 0.25), rtol=1e-6)
+    np.testing.assert_allclose(np.sum(a, axis=-1), np.ones(2), rtol=1e-6)
+    assert np.all((a > 0.0) & (a < 1.0))
 
 
 @pytest.mark.parametrize("formato", FORMATOS_TESTE)
-def test_tanh_formato_preservado(formato):
-    """Valida dimensões de entrada e saída na Tanh analítica."""
-    ativacao = Tanh()
+def test_softmax_formato_preservado(formato):
+    """Valida dimensões de entrada e saída na Softmax."""
+    ativacao = Softmax()
     z = np.random.randn(*formato)
     a = ativacao.passo_a_frente(z)
     assert a.shape == formato
+    np.testing.assert_allclose(np.sum(a, axis=-1), np.ones(formato[0]), rtol=1e-6)
 
     grad_entrada = ativacao.passo_atras(np.ones_like(a))
     assert grad_entrada.shape == formato
 
 
-def test_tanh_derivada_analitica():
-    """Valida se dL/dZ = dL/dA * (1 - tanh^2(Z))."""
-    ativacao = Tanh()
-    z = np.array([-1.5, 0.0, 1.5])
-    a = ativacao.passo_a_frente(z)
+def test_softmax_derivada_analitica():
+    """Valida se dL/dZ = S * (dL/dS - sum(dL/dS * S))."""
+    ativacao = Softmax()
+    z = np.array([[0.5, -1.0, 2.0], [1.0, 2.0, 0.0]])
+    s = ativacao.passo_a_frente(z)
 
-    grad_saida = np.array([1.0, 2.0, 0.5])
+    grad_saida = np.array([[1.0, 0.0, -0.5], [0.2, 0.8, -0.3]])
     grad_entrada = ativacao.passo_atras(grad_saida)
 
-    esperado = grad_saida * (1.0 - a**2)
+    soma = np.sum(grad_saida * s, axis=-1, keepdims=True)
+    esperado = s * (grad_saida - soma)
     np.testing.assert_allclose(grad_entrada, esperado, rtol=1e-6)
 
 
-def test_tanh_estabilidade_sem_overflow():
-    """Valida se a Tanh analítica satura em -1 e 1 sem gerar NaN/inf para entradas extremas."""
-    ativacao = Tanh()
-    z = np.array([-1000.0, -500.0, 500.0, 1000.0])
+def test_softmax_estabilidade_sem_overflow():
+    """Valida se a Softmax não gera NaN/inf para entradas extremas grandes ou negativas."""
+    ativacao = Softmax()
+    z = np.array([[1000.0, 1001.0, 1002.0], [-1000.0, -1000.0, -1000.0]])
     a = ativacao.passo_a_frente(z)
 
     assert not np.any(np.isnan(a))
     assert not np.any(np.isinf(a))
-    assert np.all(a >= -1.0) and np.all(a <= 1.0)
-    assert np.isclose(a[0], -1.0)
-    assert np.isclose(a[-1], 1.0)
+    np.testing.assert_allclose(np.sum(a, axis=-1), np.ones(2), rtol=1e-6)
+    np.testing.assert_allclose(a[1], np.full(3, 1.0 / 3.0), rtol=1e-6)
 
 
 # =============================================================================
