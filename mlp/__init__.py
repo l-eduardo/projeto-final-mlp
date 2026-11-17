@@ -1,4 +1,13 @@
-from mlp.ativacoes import LeakyReLU, Sigmoide, Softmax, Swish
+from mlp.ativacoes import (
+    ELU,
+    LeakyReLU,
+    Sigmoide,
+    Softmax,
+    Softplus,
+    Softsign,
+    Swish,
+    Tanh,
+)
 from mlp.base import Ativacao, Camada, FuncaoCusto, Inicializador
 from mlp.inicializadores import GlorotNormal, GlorotUniforme, HeNormal, Zeros
 from mlp.rede import RedeNeural
@@ -17,4 +26,8 @@ __all__ = [
     "LeakyReLU",
     "Swish",
     "Softmax",
+    "Tanh",
+    "ELU",
+    "Softplus",
+    "Softsign",
 ]

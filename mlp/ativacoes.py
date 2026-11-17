@@ -114,3 +114,96 @@ class Softmax(Ativacao):
     def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
         soma = np.sum(gradiente_saida * self.ativacoes, axis=-1, keepdims=True)
         return self.ativacoes * (gradiente_saida - soma)
+
+
+class Tanh(Ativacao):
+    """Função de ativação Tangente Hiperbólica (Tanh) analítica.
+
+    ATENÇÃO - REQUISITO DE NOTA ZERO:
+        É terminantemente proibido o uso de `np.tanh`.
+        O cálculo deve ser analítico a partir de formulações elementares:
+        tanh(z) = 2 * sigmoide(2z) - 1
+
+    Derivada analítica:
+        f'(z) = 1 - (tanh(z))^2
+    """
+
+    def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
+        self.ativacoes = 2 * sigmoide(2 * entradas) - 1
+        return self.ativacoes
+
+    def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
+        return gradiente_saida * (1 - self.ativacoes**2)
+
+
+class ELU(Ativacao):
+    """Função de ativação Exponential Linear Unit (ELU).
+
+    Fórmula matemática:
+        f(z) = z se z > 0, caso contrário alpha * (exp(z) - 1)
+
+    Derivada analítica:
+        f'(z) = 1 se z > 0, caso contrário alpha * exp(z) = f(z) + alpha
+    """
+
+    def __init__(self, alpha: float = 1.0) -> None:
+        """Inicializa a ELU com o parâmetro de escala alpha para valores negativos.
+
+        Parâmetros:
+            alpha (float): Fator de escala para z <= 0. Padrão: 1.0.
+        """
+        self.alpha = float(alpha)
+
+    def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
+        self.entradas = entradas
+        self.ativacoes = np.where(
+            entradas > 0, entradas, self.alpha * np.expm1(np.minimum(entradas, 0))
+        )
+        return self.ativacoes
+
+    def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
+        derivada = np.where(self.entradas > 0, 1.0, self.ativacoes + self.alpha)
+        return gradiente_saida * derivada
+
+
+class Softplus(Ativacao):
+    """Função de ativação Softplus.
+
+    Fórmula matemática:
+        f(z) = ln(1 + exp(z))
+
+    Derivada analítica:
+        f'(z) = sigmoide(z)
+
+    Nota de estabilidade numérica:
+        Calculada como max(z, 0) + ln(1 + exp(-|z|)) via log1p para prevenir
+        overflow com entradas z >> 0.
+    """
+
+    def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
+        self.entradas = entradas
+        self.ativacoes = np.maximum(entradas, 0) + np.log1p(np.exp(-np.abs(entradas)))
+        return self.ativacoes
+
+    def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
+        return gradiente_saida * sigmoide(self.entradas)
+
+
+class Softsign(Ativacao):
+    """Função de ativação Softsign.
+
+    Fórmula matemática:
+        f(z) = z / (1 + |z|)
+
+    Derivada analítica:
+        f'(z) = 1 / (1 + |z|)^2
+    """
+
+    def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
+        self.entradas = entradas
+        self.ativacoes = entradas / (1 + np.abs(entradas))
+        return self.ativacoes
+
+    def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
+        derivada = 1.0 / ((1 + np.abs(self.entradas)) ** 2)
+        return gradiente_saida * derivada
