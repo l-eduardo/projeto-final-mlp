@@ -9,12 +9,14 @@ from mlp.ativacoes import (
     Tanh,
 )
 from mlp.base import Ativacao, Camada, FuncaoCusto, Inicializador
+from mlp.camadas import Densa
 from mlp.custos import BCE, CCE, MSE
 from mlp.inicializadores import GlorotNormal, GlorotUniforme, HeNormal, Zeros
 from mlp.rede import RedeNeural
 
 __all__ = [
     "Camada",
+    "Densa",
     "Ativacao",
     "FuncaoCusto",
     "Inicializador",
