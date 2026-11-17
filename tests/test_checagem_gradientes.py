@@ -12,14 +12,14 @@ from mlp.ativacoes import (
     Tanh,
 )
 from mlp.camadas import Densa
-from mlp.checagem_gradientes import (
+from mlp.custos import BCE, CCE, MSE
+from mlp.rede import RedeNeural
+from tests.checagem_gradientes import (
     calcular_erro_relativo,
     checar_gradiente_ativacao,
     checar_gradiente_camada_densa,
     checar_gradiente_rede,
 )
-from mlp.custos import BCE, CCE, MSE
-from mlp.rede import RedeNeural
 
 
 def test_calcular_erro_relativo_identicos():
