@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from mlp.ativacoes import LeakyReLU, Sigmoide, Tanh
+from mlp.ativacoes import LeakyReLU, Sigmoide, Swish, Tanh
 
 FORMATOS_TESTE = [
     (1, 1),
@@ -198,3 +198,58 @@ def test_tanh_estabilidade_sem_overflow():
     assert np.all(a >= -1.0) and np.all(a <= 1.0)
     assert np.isclose(a[0], -1.0)
     assert np.isclose(a[-1], 1.0)
+
+
+# =============================================================================
+# 5. Swish (SiLU)
+# =============================================================================
+
+
+def test_swish_valores_conhecidos():
+    """Valida Swish(0) = 0 e Swish(z) = z * sigmoide(z) em pontos conhecidos."""
+    ativacao = Swish()
+    z = np.array([-2.0, 0.0, 2.0])
+    a = ativacao.passo_a_frente(z)
+
+    sig = 1.0 / (1.0 + np.exp(-z))
+    esperado = z * sig
+    np.testing.assert_allclose(a, esperado, rtol=1e-6)
+    assert np.isclose(a[1], 0.0)
+
+
+@pytest.mark.parametrize("formato", FORMATOS_TESTE)
+def test_swish_formato_preservado(formato):
+    """Valida dimensões de entrada e saída na Swish."""
+    ativacao = Swish()
+    z = np.random.randn(*formato)
+    a = ativacao.passo_a_frente(z)
+    assert a.shape == formato
+
+    grad_entrada = ativacao.passo_atras(np.ones_like(a))
+    assert grad_entrada.shape == formato
+
+
+def test_swish_derivada_analitica():
+    """Valida se dL/dZ = dL/dA * (sig(z) + z * sig(z) * (1 - sig(z)))."""
+    ativacao = Swish()
+    z = np.array([-1.5, 0.0, 1.5])
+    ativacao.passo_a_frente(z)
+
+    grad_saida = np.array([1.0, 2.0, 0.5])
+    grad_entrada = ativacao.passo_atras(grad_saida)
+
+    sig = 1.0 / (1.0 + np.exp(-z))
+    derivada_esperada = sig + z * sig * (1.0 - sig)
+    np.testing.assert_allclose(grad_entrada, grad_saida * derivada_esperada, rtol=1e-6)
+
+
+def test_swish_estabilidade_sem_overflow():
+    """Valida se Swish não gera NaN/inf para entradas extremas."""
+    ativacao = Swish()
+    z = np.array([-1000.0, -500.0, 500.0, 1000.0])
+    a = ativacao.passo_a_frente(z)
+
+    assert not np.any(np.isnan(a))
+    assert not np.any(np.isinf(a))
+    assert np.isclose(a[0], 0.0)
+    assert np.isclose(a[-1], 1000.0)

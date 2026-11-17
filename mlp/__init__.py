@@ -1,11 +1,11 @@
-from mlp.ativacoes import LeakyReLU, Sigmoide, Tanh
+from mlp.ativacoes import LeakyReLU, Sigmoide, Swish, Tanh
 from mlp.base import Ativacao, Camada, FuncaoCusto, Inicializador
 from mlp.inicializadores import GlorotNormal, GlorotUniforme, HeNormal, Zeros
 from mlp.rede import RedeNeural
 
 __all__ = [
-    "Ativacao",
     "Camada",
+    "Ativacao",
     "FuncaoCusto",
     "Inicializador",
     "RedeNeural",
@@ -16,4 +16,5 @@ __all__ = [
     "Sigmoide",
     "LeakyReLU",
     "Tanh",
+    "Swish",
 ]

@@ -112,3 +112,42 @@ class Tanh(Ativacao):
             np.ndarray: Gradiente em relação às entradas dL/dZ = dL/dA * f'(Z).
         """
         raise NotImplementedError("A ser implementado na Issue #7")
+
+
+class Swish(Ativacao):
+    """Função de ativação Swish (SiLU — Sigmoid Linear Unit).
+
+    Fórmula matemática:
+        f(z) = z * sigmoide(z), onde sigmoide(z) = 1 / (1 + exp(-z))
+
+    Derivada analítica:
+        f'(z) = sigmoide(z) + z * sigmoide(z) * (1 - sigmoide(z))
+        ou equivalentemente:
+        f'(z) = f(z) + sigmoide(z) * (1 - f(z))
+
+    Nota de estabilidade numérica:
+        Recomenda-se proteger o cálculo da sigmoide contra overflow em exp(-z)
+        para valores de z muito negativos (clipping ou ramos z >= 0 e z < 0).
+    """
+
+    def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
+        """Calcula a propagação direta da função Swish.
+
+        Parâmetros:
+            entradas (np.ndarray): Matriz de entradas (pré-ativações Z).
+
+        Retorna:
+            np.ndarray: Ativações calculadas A = Z * sigmoide(Z).
+        """
+        raise NotImplementedError("A ser implementado na Issue #7")
+
+    def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
+        """Calcula a retropropagação da Swish aplicando a regra da cadeia.
+
+        Parâmetros:
+            gradiente_saida (np.ndarray): dL/dA recebido da camada posterior.
+
+        Retorna:
+            np.ndarray: Gradiente em relação às entradas dL/dZ = dL/dA * f'(Z).
+        """
+        raise NotImplementedError("A ser implementado na Issue #7")
