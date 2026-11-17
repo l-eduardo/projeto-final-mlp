@@ -51,7 +51,7 @@ O desenvolvimento deste projeto foi pautado pelas diretrizes éticas e acadêmic
 - **Ferramentas Utilizadas:** Google Antigravity CLI / Gemini 3.8 Flash.
 - **Finalidade:**
   - Estruturação do laço de treinamento Mini-batch SGD na classe `RedeNeural` (`mlp/rede.py`), com embaralhamento aleatório determinístico (*shuffle*), particionamento em lotes e registro de perdas de treino e validação;
-  - Implementação do algoritmo de Diferenças Finitas Centradas em `mlp/checagem_gradientes.py`, provendo verificação numérica rigorosa com erro de truncamento $\mathcal{O}(\epsilon^2)$ e métrica de erro relativo normalizado de Stanford/CS231n.
+  - Implementação do algoritmo de Diferenças Finitas Centradas em `tests/checagem_gradientes.py`, provendo verificação numérica rigorosa com erro de truncamento $\mathcal{O}(\epsilon^2)$ e métrica de erro relativo normalizado de Stanford/CS231n.
 - **Intervenção e Validação Humana:**
   - Deducão do produto vetor-Jacobiana na combinação Softmax + CCE;
   - Verificação de que todos os gradientes analíticos da biblioteca apresentavam erro relativo inferior a $10^{-6}$ contra as aproximações numéricas por diferenças finitas.

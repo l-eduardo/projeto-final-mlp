@@ -29,9 +29,9 @@ projeto-final-mlp/
 │   ├── ativacoes.py              # 8 funções de ativação e derivadas analíticas estáveis
 │   ├── custos.py                 # Funções de perda (MSE, BCE, CCE) e gradientes
 │   ├── camadas.py                # Camada Densa linear afim (forward e backward)
-│   ├── rede.py                   # Classe RedeNeural e laço Mini-batch SGD
-│   └── checagem_gradientes.py    # Auditoria numérica de gradientes por diferenças finitas
+│   └── rede.py                   # Classe RedeNeural e laço Mini-batch SGD
 ├── tests/                        # Suíte de testes automatizados com Pytest (164 testes)
+│   ├── checagem_gradientes.py    # Utilitário de auditoria numérica de gradientes por diferenças finitas
 │   ├── test_inicializadores.py   # Testes estatísticos e dimensionais dos inicializadores
 │   ├── test_ativacoes.py         # Testes de forward e backward das 8 funções de ativação
 │   ├── test_custos.py            # Testes de perdas e gradientes analíticos
@@ -92,7 +92,7 @@ Todas as funções contam com formulações numericamente estáveis para evitar 
 ### 3.5. Orquestração e Otimizador (`mlp/rede.py`)
 - **RedeNeural:** Encadeamento modular flexível, compilação de perda e treinamento via **Mini-batch Stochastic Gradient Descent (SGD)** com embaralhamento aleatório por época (*shuffle*), cálculo de perda em validação e suporte a semente determinística para reprodutibilidade.
 
-### 3.6. Auditoria Matemática de Gradientes (`mlp/checagem_gradientes.py`)
+### 3.6. Auditoria Matemática de Gradientes (`tests/checagem_gradientes.py`)
 - Verificação numérica rigorosa de gradientes via **Diferenças Finitas Centradas** com erro de truncamento de segunda ordem $\mathcal{O}(\epsilon^2)$ e cálculo de erro relativo euclidiano $L_2$ normalizado pelo padrão de Stanford/CS231n ($\text{tolerância} < 10^{-6}$).
 
 ---
