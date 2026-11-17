@@ -62,3 +62,6 @@ plano_projeto_mlp.md
 
 # Lint
 .ruff_cache
+
+# Documentos de estudo locais (não versionados)
+conceitos/
