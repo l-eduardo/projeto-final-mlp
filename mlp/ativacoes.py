@@ -18,26 +18,15 @@ class Sigmoide(Ativacao):
     """
 
     def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
-        """Calcula a propagação direta da função Sigmoide.
+        cliped_entradas = np.clip(entradas, -500, 500)
 
-        Parâmetros:
-            entradas (np.ndarray): Matriz de entradas (pré-ativações Z).
+        output = 1 / (1 + np.exp(-cliped_entradas))
 
-        Retorna:
-            np.ndarray: Ativações calculadas A = f(Z).
-        """
-        raise NotImplementedError("A ser implementado na Issue #7")
+        self.ativacoes = output  # Armazena as ativações para uso na retropropagação
+        return output
 
     def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
-        """Calcula a retropropagação da Sigmoide aplicando a regra da cadeia.
-
-        Parâmetros:
-            gradiente_saida (np.ndarray): dL/dA recebido da camada posterior.
-
-        Retorna:
-            np.ndarray: Gradiente em relação às entradas dL/dZ = dL/dA * f'(Z).
-        """
-        raise NotImplementedError("A ser implementado na Issue #7")
+        return gradiente_saida * self.ativacoes * (1 - self.ativacoes)
 
 
 class ReLU(Ativacao):
