@@ -65,12 +65,11 @@ class RedeNeural:
         verbal: bool = True,
     ) -> dict[str, list[float]]:
         """Executa o laço de treinamento (Mini-batch SGD) e retorna o histórico de custo.
-        
+
         A cada época, os dados de treinamento são embaralhados aleatoriamente e particionados
         em mini-lotes. Para cada lote, são executados: passo à frente, cálculo do gradiente
         da função de custo, passo atrás e atualização de pesos de todas as camadas treináveis.
         Ao final de cada época, o custo agregado de treino é registrado no histórico.
-        
         """
         if self.funcao_custo is None:
             raise RuntimeError(
