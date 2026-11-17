@@ -4,16 +4,7 @@ from mlp.base import Ativacao, Camada, FuncaoCusto
 
 
 class RedeNeural:
-    """Estrutura principal para encadeamento, treinamento e inferência da MLP.
-
-    Permite a composição sequencial de camadas densas e funções de ativação,
-    fornecendo os métodos de propagação direta (forward), retropropagação (backward)
-    e otimização via Mini-batch Stochastic Gradient Descent (SGD).
-
-    Parâmetros:
-        semente_aleatoria (int | None): Semente para o gerador pseudoaleatório,
-            garantindo reprodutibilidade no particionamento e embaralhamento dos lotes.
-    """
+    """Estrutura principal para encadeamento, treinamento e inferência da MLP."""
 
     def __init__(self, semente_aleatoria: int | None = None):
         self.camadas: list[Camada | Ativacao] = []
@@ -22,14 +13,7 @@ class RedeNeural:
         self.gerador_aleatorio = np.random.RandomState(semente_aleatoria)
 
     def adicionar(self, camada: Camada | Ativacao) -> None:
-        """Adiciona uma camada ou função de ativação à sequência da rede.
-
-        Parâmetros:
-            camada (Camada | Ativacao): Instância de Camada ou Ativacao a ser encadeada.
-
-        Levanta:
-            TypeError: Se o objeto fornecido não for uma instância de Camada ou Ativacao.
-        """
+        """Adiciona uma camada ou função de ativação à rede."""
         if not isinstance(camada, (Camada, Ativacao)):
             raise TypeError(
                 f"Objeto inválido do tipo {type(camada).__name__}. "
@@ -38,14 +22,7 @@ class RedeNeural:
         self.camadas.append(camada)
 
     def compilar(self, funcao_custo: FuncaoCusto) -> None:
-        """Define a função de custo a ser utilizada no treinamento da rede.
-
-        Parâmetros:
-            funcao_custo (FuncaoCusto): Instância da função de custo/perda.
-
-        Levanta:
-            TypeError: Se o objeto fornecido não herdar de FuncaoCusto.
-        """
+        """Define a função de custo a ser utilizada no treinamento."""
         if not isinstance(funcao_custo, FuncaoCusto):
             raise TypeError(
                 f"Objeto inválido do tipo {type(funcao_custo).__name__}. "
@@ -54,17 +31,7 @@ class RedeNeural:
         self.funcao_custo = funcao_custo
 
     def passo_a_frente(self, X: np.ndarray) -> np.ndarray:
-        """Realiza a propagação direta através de todas as camadas sequencialmente.
-
-        Parâmetros:
-            X (np.ndarray): Tensor de entrada de formato (N, dimensao_entrada).
-
-        Retorna:
-            np.ndarray: Saída final produzida pela última camada da rede.
-
-        Levanta:
-            RuntimeError: Se nenhuma camada tiver sido adicionada à rede.
-        """
+        """Realiza a propagação direta através de todas as camadas da rede."""
         if not self.camadas:
             raise RuntimeError("Nenhuma camada foi adicionada à rede neural.")
 
@@ -74,15 +41,7 @@ class RedeNeural:
         return saida
 
     def passo_atras(self, gradiente_saida: np.ndarray) -> None:
-        """Realiza a retropropagação do gradiente do fim para o início da rede.
-
-        Parâmetros:
-            gradiente_saida (np.ndarray): Gradiente da função de custo em relação
-                à saída predita da rede (dL / dy_predito).
-
-        Levanta:
-            RuntimeError: Se nenhuma camada tiver sido adicionada à rede.
-        """
+        """Realiza a retropropagação do gradiente do fim para o início da rede."""
         if not self.camadas:
             raise RuntimeError("Nenhuma camada foi adicionada à rede neural.")
 
@@ -91,14 +50,7 @@ class RedeNeural:
             gradiente = camada.passo_atras(gradiente)
 
     def predizer(self, X: np.ndarray) -> np.ndarray:
-        """Realiza predições para novas observações através da propagação direta.
-
-        Parâmetros:
-            X (np.ndarray): Tensor de entrada de formato (N, dimensao_entrada).
-
-        Retorna:
-            np.ndarray: Predições calculadas pela rede.
-        """
+        """Realiza predições para novas observações."""
         return self.passo_a_frente(X)
 
     def treinar(
@@ -112,31 +64,13 @@ class RedeNeural:
         y_validacao: np.ndarray | None = None,
         verbal: bool = True,
     ) -> dict[str, list[float]]:
-        """Executa o laço de treinamento via Mini-batch SGD e retorna o histórico de custo.
-
+        """Executa o laço de treinamento (Mini-batch SGD) e retorna o histórico de custo.
+        
         A cada época, os dados de treinamento são embaralhados aleatoriamente e particionados
         em mini-lotes. Para cada lote, são executados: passo à frente, cálculo do gradiente
         da função de custo, passo atrás e atualização de pesos de todas as camadas treináveis.
-        Ao final de cada época, o custo agregado de treino (e opcionalmente de validação) é registrado.
-
-        Parâmetros:
-            X_treino (np.ndarray): Dados de entrada de treino de formato (N, d_in).
-            y_treino (np.ndarray): Rótulos ou alvos de treino de formato (N, d_out).
-            epocas (int): Número total de épocas de treinamento (deve ser > 0).
-            taxa_aprendizagem (float): Taxa de aprendizado eta para o SGD (deve ser > 0).
-            tamanho_lote (int): Quantidade de amostras por mini-lote (padrão 32, deve ser > 0).
-            X_validacao (np.ndarray | None): Dados de entrada de validação opcionais.
-            y_validacao (np.ndarray | None): Rótulos ou alvos de validação opcionais.
-            verbal (bool): Se True, imprime o progresso do custo a cada época.
-
-        Retorna:
-            dict[str, list[float]]: Dicionário com histórico de perdas:
-                - "custo_treino": lista de floats com custo por época.
-                - "custo_validacao": lista de floats com custo por época (se fornecida validação).
-
-        Levanta:
-            RuntimeError: Se a rede não tiver sido compilada ou não possuir camadas.
-            ValueError: Se os parâmetros de treino ou formatos de dados forem inválidos.
+        Ao final de cada época, o custo agregado de treino é registrado no histórico.
+        
         """
         if self.funcao_custo is None:
             raise RuntimeError(
@@ -182,32 +116,20 @@ class RedeNeural:
             historico["custo_validacao"] = []
 
         for epoca in range(1, epocas + 1):
-            # Embaralhamento aleatório dos dados a cada época
             indices = self.gerador_aleatorio.permutation(n_amostras)
             X_embaralhado = X_treino[indices]
             y_embaralhado = y_treino[indices]
 
-            # Divisão e processamento dos mini-lotes
             for inicio_idx in range(0, n_amostras, tamanho_lote):
                 fim_idx = min(inicio_idx + tamanho_lote, n_amostras)
                 X_lote = X_embaralhado[inicio_idx:fim_idx]
                 y_lote = y_embaralhado[inicio_idx:fim_idx]
 
-                # 1. Propagação direta no lote
                 y_pred_lote = self.passo_a_frente(X_lote)
-
-                # 2. Gradiente da função de custo no lote
                 grad_lote = self.funcao_custo.gradiente(y_lote, y_pred_lote)
-
-                # 3. Retropropagação através das camadas
                 self.passo_atras(grad_lote)
+                self._atualizar_parametros(taxa_aprendizagem)
 
-                # 4. Atualização dos parâmetros das camadas treináveis
-                for camada in self.camadas:
-                    if hasattr(camada, "atualizar_parametros"):
-                        camada.atualizar_parametros(taxa_aprendizagem)
-
-            # Avaliação de métricas ao término da época
             y_pred_treino = self.passo_a_frente(X_treino)
             custo_treino = self.funcao_custo.calcular_custo(y_treino, y_pred_treino)
             historico["custo_treino"].append(float(custo_treino))
@@ -224,3 +146,12 @@ class RedeNeural:
                 print(msg)
 
         return historico
+
+    def _atualizar_parametros(self, taxa_aprendizagem: float) -> None:
+        """Atualiza pesos e vieses de todas as camadas treináveis."""
+        for camada in self.camadas:
+            if hasattr(camada, "atualizar_parametros"):
+                camada.atualizar_parametros(taxa_aprendizagem)
+            elif isinstance(camada, Camada):
+                camada.pesos -= taxa_aprendizagem * camada.gradiente_pesos
+                camada.vieses -= taxa_aprendizagem * camada.gradiente_vieses

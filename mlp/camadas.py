@@ -62,9 +62,6 @@ class Densa(Camada):
         self.gradiente_vieses = np.sum(gradiente_saida, axis=0, keepdims=True)
         return gradiente_saida @ self.pesos.T
 
-    # NOTA: Ese método auxiliar NÃO faz parte do contrato original de Camada
-    # disponibilizado. Foi adicionado como utilitário para
-    # encapsular a atualização SGD dos parâmetros da camada.
     def atualizar_parametros(self, taxa_aprendizado: float) -> None:
         """Atualiza pesos e vieses usando a regra básica da descida do gradiente."""
         if self.gradiente_pesos is None or self.gradiente_vieses is None:

@@ -119,9 +119,7 @@ class Softmax(Ativacao):
 class Tanh(Ativacao):
     """Função de ativação Tangente Hiperbólica (Tanh) analítica.
 
-    ATENÇÃO - REQUISITO DE NOTA ZERO:
-        É terminantemente proibido o uso de `np.tanh`.
-        O cálculo deve ser analítico a partir de formulações elementares:
+    Calculada a partir da formulação elementar com a sigmoide:
         tanh(z) = 2 * sigmoide(2z) - 1
 
     Derivada analítica:
