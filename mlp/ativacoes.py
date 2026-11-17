@@ -29,54 +29,25 @@ class Sigmoide(Ativacao):
         return gradiente_saida * self.ativacoes * (1 - self.ativacoes)
 
 
-class ReLU(Ativacao):
-    """Função de ativação ReLU (Rectified Linear Unit).
-
-    Fórmula matemática:
-        f(z) = max(0, z)
-
-    Derivada analítica:
-        f'(z) = 1 se z > 0, caso contrário 0 (ou subgradiente 0 em z = 0).
-    """
-
-    def passo_a_frente(self, entradas: np.ndarray) -> np.ndarray:
-        """Calcula a propagação direta da função ReLU.
-
-        Parâmetros:
-            entradas (np.ndarray): Matriz de entradas (pré-ativações Z).
-
-        Retorna:
-            np.ndarray: Ativações calculadas A = max(0, Z).
-        """
-        raise NotImplementedError("A ser implementado na Issue #7")
-
-    def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
-        """Calcula a retropropagação da ReLU aplicando a regra da cadeia.
-
-        Parâmetros:
-            gradiente_saida (np.ndarray): dL/dA recebido da camada posterior.
-
-        Retorna:
-            np.ndarray: Gradiente em relação às entradas dL/dZ = dL/dA * f'(Z).
-        """
-        raise NotImplementedError("A ser implementado na Issue #7")
-
-
 class LeakyReLU(Ativacao):
     """Função de ativação Leaky ReLU.
+
+    Nota:
+        Para utilizar a ReLU padrão (f(z) = max(0, z)), basta instanciar
+        com `alpha=0`.
 
     Fórmula matemática:
         f(z) = z se z > 0, caso contrário alpha * z
 
     Derivada analítica:
-        f'(z) = 1 se z > 0, caso contrário alpha.
+        f'(z) = 1 se z > 0, caso contrário alpha (ou 0 em z = 0 quando alpha = 0).
     """
 
     def __init__(self, alpha: float = 0.01) -> None:
         """Inicializa a LeakyReLU com o fator de inclinação alpha para valores negativos.
 
         Parâmetros:
-            alpha (float): Inclinação para z < 0. Padrão: 0.01.
+            alpha (float): Inclinação para z <= 0. Use 0.0 para ReLU padrão. Padrão: 0.01.
         """
         self.alpha = float(alpha)
 
@@ -89,7 +60,8 @@ class LeakyReLU(Ativacao):
         Retorna:
             np.ndarray: Ativações calculadas A = f(Z).
         """
-        raise NotImplementedError("A ser implementado na Issue #7")
+        self.entradas = entradas
+        return np.where(entradas > 0, entradas, self.alpha * entradas)
 
     def passo_atras(self, gradiente_saida: np.ndarray) -> np.ndarray:
         """Calcula a retropropagação da LeakyReLU aplicando a regra da cadeia.
@@ -100,7 +72,9 @@ class LeakyReLU(Ativacao):
         Retorna:
             np.ndarray: Gradiente em relação às entradas dL/dZ = dL/dA * f'(Z).
         """
-        raise NotImplementedError("A ser implementado na Issue #7")
+        return np.where(
+            self.entradas > 0, gradiente_saida, self.alpha * gradiente_saida
+        )
 
 
 class Tanh(Ativacao):

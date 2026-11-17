@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from mlp.ativacoes import LeakyReLU, ReLU, Sigmoide, Tanh
+from mlp.ativacoes import LeakyReLU, Sigmoide, Tanh
 
 FORMATOS_TESTE = [
     (1, 1),
@@ -65,13 +65,13 @@ def test_sigmoide_estabilidade_sem_overflow():
 
 
 # =============================================================================
-# 2. ReLU
+# 2. ReLU (via LeakyReLU com alpha=0.0)
 # =============================================================================
 
 
 def test_relu_valores_conhecidos():
-    """Valida se ReLU(z) = max(0, z)."""
-    ativacao = ReLU()
+    """Valida se ReLU(z) = max(0, z) via LeakyReLU(alpha=0.0)."""
+    ativacao = LeakyReLU(alpha=0.0)
     z = np.array([-5.0, -0.01, 0.0, 0.01, 5.0])
     a = ativacao.passo_a_frente(z)
 
@@ -81,8 +81,8 @@ def test_relu_valores_conhecidos():
 
 @pytest.mark.parametrize("formato", FORMATOS_TESTE)
 def test_relu_formato_preservado(formato):
-    """Valida dimensões de entrada e saída na ReLU."""
-    ativacao = ReLU()
+    """Valida dimensões de entrada e saída na ReLU via LeakyReLU(alpha=0.0)."""
+    ativacao = LeakyReLU(alpha=0.0)
     z = np.random.randn(*formato)
     a = ativacao.passo_a_frente(z)
     assert a.shape == formato
@@ -92,8 +92,8 @@ def test_relu_formato_preservado(formato):
 
 
 def test_relu_derivada_analitica():
-    """Valida se o gradiente da ReLU é 1 para z > 0 e 0 para z <= 0."""
-    ativacao = ReLU()
+    """Valida se o gradiente da ReLU (alpha=0.0) é 1 para z > 0 e 0 para z <= 0."""
+    ativacao = LeakyReLU(alpha=0.0)
     z = np.array([-3.0, -1.0, 0.0, 2.0, 4.0])
     ativacao.passo_a_frente(z)
 
