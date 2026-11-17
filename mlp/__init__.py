@@ -10,6 +10,12 @@ from mlp.ativacoes import (
 )
 from mlp.base import Ativacao, Camada, FuncaoCusto, Inicializador
 from mlp.camadas import Densa
+from mlp.checagem_gradientes import (
+    calcular_erro_relativo,
+    checar_gradiente_ativacao,
+    checar_gradiente_camada_densa,
+    checar_gradiente_rede,
+)
 from mlp.custos import BCE, CCE, MSE
 from mlp.inicializadores import GlorotNormal, GlorotUniforme, HeNormal, Zeros
 from mlp.rede import RedeNeural
@@ -21,6 +27,10 @@ __all__ = [
     "FuncaoCusto",
     "Inicializador",
     "RedeNeural",
+    "calcular_erro_relativo",
+    "checar_gradiente_ativacao",
+    "checar_gradiente_camada_densa",
+    "checar_gradiente_rede",
     "Zeros",
     "GlorotNormal",
     "GlorotUniforme",
