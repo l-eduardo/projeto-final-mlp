@@ -8,6 +8,7 @@ from mlp.rede import RedeNeural
 
 # IA Based Doc
 
+
 def calcular_erro_relativo(
     gradiente_analitico: np.ndarray,
     gradiente_numerico: np.ndarray,
