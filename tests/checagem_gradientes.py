@@ -6,6 +6,7 @@ from mlp.base import Ativacao
 from mlp.camadas import Densa
 from mlp.rede import RedeNeural
 
+# IA Based Doc
 
 def calcular_erro_relativo(
     gradiente_analitico: np.ndarray,
